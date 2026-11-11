@@ -1,0 +1,527 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="claude:viewport-fit-sides" content="cover">
+<title>MaTak Smart Hub</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Sans+Arabic:wght@600&display=swap">
+<style>
+/* Layout: one reading column of stacked bands; the breaker panel (load bar against an amp limit) is the recurring motif. */
+:root{
+  --bg:#f5f7f3; --surface:#ffffff; --sunk:#eaeee8; --ink:#13201a; --muted:#56675e; --line:#dce3db;
+  --lamp:#f2b233; --lamp-ink:#8a5a00; --go:#0f8a4a; --go-soft:#dff3e6; --trip:#c5302a; --trip-soft:#fbe4e2;
+  --night:#0f1c17; --night-ink:#eef4ef; --night-muted:#a3b6ab; --night-line:#2a3a33; --plate:#f3f5f2;
+  --display:"Bricolage Grotesque","Segoe UI",system-ui,sans-serif;
+  --body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+  --arabic:"IBM Plex Sans Arabic","Geeza Pro","Segoe UI",sans-serif;
+  --r:14px;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0d1512; --surface:#152019; --sunk:#101a15; --ink:#edf3ee; --muted:#9cb0a4; --line:#27362e;
+  --lamp:#f5bd4a; --lamp-ink:#f5bd4a; --go:#43cf85; --go-soft:#143524; --trip:#ff7366; --trip-soft:#3d1a17;
+  --night:#08100d; --night-ink:#eef4ef; --night-muted:#a3b6ab; --night-line:#27362e; --plate:#e9ede8; color-scheme:dark } }
+:root[data-theme="dark"]{
+  --bg:#0d1512; --surface:#152019; --sunk:#101a15; --ink:#edf3ee; --muted:#9cb0a4; --line:#27362e;
+  --lamp:#f5bd4a; --lamp-ink:#f5bd4a; --go:#43cf85; --go-soft:#143524; --trip:#ff7366; --trip-soft:#3d1a17;
+  --night:#08100d; --night-ink:#eef4ef; --night-muted:#a3b6ab; --night-line:#27362e; --plate:#e9ede8; color-scheme:dark }
+
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 17px/1.55 var(--body);-webkit-font-smoothing:antialiased}
+a{color:inherit}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0;letter-spacing:-.02em;line-height:1.05}
+h2{font-size:clamp(1.9rem,4.4vw,3rem);font-weight:800}
+h3{font-size:1.15rem;font-weight:700;letter-spacing:-.01em;line-height:1.2}
+p{margin:0}
+.wrap{max-width:1120px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.band{padding-block:clamp(48px,8vw,96px)}
+.band.night{background:var(--night);color:var(--night-ink)}
+.band.sunk{background:var(--sunk)}
+.eyebrow{font:600 .78rem/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--lamp-ink);margin-bottom:14px}
+.night .eyebrow{color:var(--lamp)}
+.lede{font-size:clamp(1.05rem,1.6vw,1.25rem);color:var(--muted);max-width:60ch;margin-top:16px}
+.night .lede{color:var(--night-muted)}
+.head{margin-bottom:clamp(28px,4vw,44px)}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+:focus-visible{outline:3px solid var(--lamp);outline-offset:2px}
+
+/* nav */
+.nav{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-block:18px;flex-wrap:wrap}
+.logo{display:flex;align-items:baseline;gap:10px;font:800 1.5rem/1 var(--display);text-decoration:none;letter-spacing:-.02em}
+.logo span{font:600 1.05rem/1 var(--arabic);color:var(--lamp)}
+.nav nav{display:flex;gap:clamp(12px,2.4vw,26px);flex-wrap:wrap;font-size:.95rem;font-weight:500}
+.nav nav a{text-decoration:none;color:var(--night-muted)}
+.nav nav a:hover{color:var(--night-ink)}
+
+/* hero */
+.hero{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);gap:clamp(28px,5vw,64px);align-items:center;padding-block:clamp(24px,5vw,56px) clamp(48px,7vw,88px)}
+.hero h1{font-size:clamp(2.5rem,6.6vw,4.9rem);font-weight:800}
+.hero h1 em{font-style:normal;color:var(--lamp)}
+.hero .meaning{margin-top:22px;font:500 .95rem/1.4 var(--mono);color:var(--night-muted)}
+.hero .meaning b{font:600 1.15rem/1 var(--arabic);color:var(--lamp);margin-right:6px}
+.cta{display:flex;gap:12px;flex-wrap:wrap;margin-top:28px}
+.btn{display:inline-flex;align-items:center;gap:8px;border-radius:999px;padding:13px 22px;font:600 1rem/1 var(--body);text-decoration:none;border:1.5px solid transparent;cursor:pointer}
+.btn.solid{background:var(--lamp);color:#1d1400}
+.btn.line{border-color:var(--night-line);color:var(--night-ink);background:transparent}
+.btn.line:hover{border-color:var(--night-muted)}
+
+/* breaker panel (hero demo) */
+.panel{background:#16261f;border:1px solid var(--night-line);border-radius:20px;padding:clamp(18px,2.6vw,26px);color:var(--night-ink)}
+.panel-top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap;font:600 .78rem/1.2 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--night-muted)}
+.readout{display:flex;align-items:baseline;gap:10px;margin:14px 0 26px;flex-wrap:wrap}
+.readout b{font:600 clamp(2.6rem,6vw,3.6rem)/1 var(--mono);font-variant-numeric:tabular-nums;color:#7be3a6;transition:color .3s}
+.readout span{font:500 1.1rem/1 var(--mono);color:var(--night-muted)}
+.panel.tripped .readout b{color:#ff7366}
+.bar{position:relative;height:16px;border-radius:999px;background:#0b1410;border:1px solid var(--night-line)}
+.bar i{position:absolute;inset:0 auto 0 0;border-radius:999px;background:#43cf85;transition:width .5s,background .3s}
+.panel.tripped .bar i{background:#ff7366}
+.bar u{position:absolute;top:-7px;bottom:-7px;left:75%;width:3px;border-radius:2px;background:var(--night-ink)}
+.bar u::after{content:"30 A limit";position:absolute;bottom:100%;left:50%;transform:translateX(-50%);white-space:nowrap;font:600 .7rem/1.6 var(--mono);color:var(--night-ink)}
+.loads{list-style:none;margin:20px 0 0;padding:0;display:grid;gap:8px}
+.loads li{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:12px;background:#0f1c17;border:1px solid var(--night-line)}
+.loads .nm{flex:1;min-width:0;font-weight:600}
+.loads .nm small{display:block;font:500 .78rem/1.3 var(--mono);color:var(--night-muted)}
+.sw{flex:none;width:48px;height:28px;border-radius:14px;border:0;background:#3a4a43;position:relative;cursor:pointer;transition:background .2s}
+.sw::after{content:"";position:absolute;left:3px;top:3px;width:22px;height:22px;border-radius:50%;background:#fff;transition:left .2s}
+.sw[aria-checked="true"]{background:#2fb872}
+.sw[aria-checked="true"]::after{left:23px}
+.panel.tripped .loads li{opacity:.55}
+.verdict{margin-top:16px;border-radius:12px;padding:12px 14px;font-weight:600;font-size:.98rem;line-height:1.35;background:#143524;color:#c9f3da}
+.panel.tripped .verdict{background:#3d1a17;color:#ffd5d0}
+.panel-btns{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+.panel-btns button{font:600 .92rem/1 var(--body);border-radius:999px;padding:11px 16px;cursor:pointer;border:1.5px solid var(--night-line);background:transparent;color:var(--night-ink)}
+.panel-btns button.main{background:var(--lamp);border-color:var(--lamp);color:#1d1400}
+
+/* problem */
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.stats div{padding:26px 20px 26px 0}
+.stats div + div{border-left:1px solid var(--line);padding-left:20px}
+.stats b{display:block;font:800 clamp(2rem,4.4vw,3.2rem)/1 var(--display);letter-spacing:-.03em}
+.stats p{margin-top:10px;font-size:.98rem}
+.stats small{display:block;margin-top:6px;color:var(--muted);font-size:.85rem}
+.pull{font:700 clamp(1.4rem,3vw,2.1rem)/1.2 var(--display);letter-spacing:-.02em;max-width:26ch;margin-top:clamp(28px,4vw,44px);text-wrap:balance}
+.pull span{color:var(--muted)}
+
+/* how */
+.how{display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);gap:clamp(28px,5vw,64px);align-items:start}
+.hubshot{background:var(--plate);border-radius:20px;padding:clamp(14px,3vw,30px);position:sticky;top:24px}
+.hubshot img{display:block;width:100%;height:auto;aspect-ratio:1502/1441}
+.hubshot figcaption{font:500 .78rem/1.4 var(--mono);color:#56675e;margin-top:8px;text-align:center}
+figure{margin:0}
+.steps{list-style:none;margin:0;padding:0;counter-reset:s}
+.steps li{counter-increment:s;display:grid;grid-template-columns:44px minmax(0,1fr);gap:16px;padding:20px 0;border-top:1px solid var(--line)}
+.steps li:last-child{border-bottom:1px solid var(--line)}
+.steps li::before{content:counter(s);font:600 1rem/1 var(--mono);width:36px;height:36px;border-radius:50%;display:grid;place-items:center;border:1.5px solid var(--ink)}
+.steps p{color:var(--muted);margin-top:4px}
+.promise{margin-top:24px;padding:18px 20px;border-radius:var(--r);background:var(--go-soft);color:var(--ink);font-weight:500}
+.promise b{color:var(--go)}
+
+/* demo */
+.demo video{display:block;width:100%;height:auto;border-radius:16px;background:#000;border:1px solid var(--night-line);aspect-ratio:16/9}
+.endings{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:18px}
+.endings div{padding:16px 18px;border-radius:var(--r);border:1px solid var(--night-line)}
+.endings b{display:block;font:700 1.1rem/1.2 var(--display)}
+.endings .bad b{color:#ff8a7f}.endings .good b{color:#6fe0a0}
+.endings p{color:var(--night-muted);font-size:.95rem;margin-top:4px}
+
+/* pricing */
+.plans{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:20px;align-items:stretch}
+.plan{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:clamp(20px,3vw,30px);display:flex;flex-direction:column;gap:18px}
+.plan.hotel{border:2px solid var(--ink)}
+.tag{align-self:flex-start;font:600 .72rem/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;padding:6px 10px;border-radius:999px;background:var(--sunk);color:var(--muted)}
+.plan.hotel .tag{background:var(--ink);color:var(--bg)}
+.price{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.price b{font:800 clamp(2.4rem,5vw,3.4rem)/1 var(--display);letter-spacing:-.03em}
+.price span{color:var(--muted)}
+.rows{list-style:none;margin:0;padding:0}
+.rows li{display:flex;justify-content:space-between;flex-wrap:wrap;gap:4px 16px;padding:12px 0;border-top:1px solid var(--line)}
+.rows li div{min-width:0}
+.rows small{display:block;color:var(--muted);font-size:.88rem}
+.rows .num{font-weight:600;white-space:nowrap}
+.fine{color:var(--muted);font-size:.88rem}
+
+/* calculator */
+.calc{margin-top:20px;background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:clamp(20px,3vw,30px);display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:clamp(20px,4vw,48px)}
+.calc label,.calc legend{font-weight:600;display:block;margin-bottom:8px;padding:0}
+.calc fieldset{border:0;margin:22px 0 0;padding:0}
+.calc output{font:600 1.5rem/1 var(--mono);display:block;margin-bottom:10px}
+.calc input[type=range]{width:100%;accent-color:var(--go)}
+.seg{display:inline-flex;border:1.5px solid var(--line);border-radius:999px;padding:3px;gap:2px}
+.seg button{border:0;background:transparent;color:var(--ink);font:600 .95rem/1 var(--mono);padding:9px 16px;border-radius:999px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.result{display:grid;gap:0;align-content:start}
+.result div{display:flex;justify-content:space-between;gap:16px;padding:11px 0;border-top:1px solid var(--line)}
+.result div:first-child{border-top:0}
+.result span{color:var(--muted)}
+.result b{font:600 1rem/1.4 var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.result .big{margin-top:10px;padding:16px 18px;border-radius:var(--r);border:0;background:var(--go-soft);display:block}
+.result .big.no{background:var(--trip-soft)}
+.result .big b{display:block;font:800 clamp(1.4rem,3vw,1.9rem)/1.15 var(--display);white-space:normal;letter-spacing:-.02em}
+.result .big span{color:var(--ink);font-size:.92rem}
+
+/* compare */
+.scroll{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--surface)}
+table{border-collapse:collapse;width:100%;min-width:720px;font-size:.96rem}
+th,td{padding:14px 16px;text-align:center;border-top:1px solid var(--line)}
+thead th{border-top:0;font:600 .78rem/1.3 var(--mono);letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+th[scope=row],thead th:first-child{text-align:left}
+th[scope=row]{font-weight:600}
+td.y{color:var(--go);font-weight:700}td.n{color:var(--trip);font-weight:700}td.p{color:var(--lamp-ink);font-weight:700}
+tr.us th,tr.us td{background:var(--go-soft)}
+tr.us th{font:800 1.1rem/1 var(--display)}
+td.cost{font-family:var(--mono);font-size:.88rem}
+
+/* business */
+.canvas{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.canvas div{background:var(--surface);padding:18px}
+.canvas .wide{grid-column:1/-1;background:var(--go-soft)}
+.canvas h3{font:600 .76rem/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
+.canvas ul{margin:0;padding-left:18px;font-size:.95rem}
+.canvas li + li{margin-top:4px}
+.facts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px;margin-top:24px}
+.facts b{display:block;font:800 1.9rem/1 var(--display);letter-spacing:-.02em}
+.facts p{color:var(--muted);font-size:.95rem;margin-top:6px}
+
+/* team */
+.team{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:16px;list-style:none;margin:0;padding:0}
+.team li{display:flex;flex-direction:column;gap:10px;font-weight:600;line-height:1.25}
+.team i{font:600 1rem/1 var(--mono);font-style:normal;width:52px;height:52px;border-radius:50%;display:grid;place-items:center;border:1.5px solid var(--night-line);color:var(--lamp)}
+.next{margin-top:clamp(28px,4vw,44px);padding:clamp(20px,3vw,30px);border-radius:20px;border:1px solid var(--night-line);display:grid;grid-template-columns:minmax(0,1fr) auto;gap:20px;align-items:center}
+.next p{color:var(--night-muted);margin-top:6px}
+.next .eyebrow{margin-bottom:10px}
+.mailbox{display:flex;flex-direction:column;align-items:flex-start;gap:12px}
+.mail{font:600 clamp(1.1rem,2.2vw,1.4rem)/1.2 var(--mono);user-select:all;-webkit-user-select:all;overflow-wrap:anywhere}
+footer{padding-block:28px 36px;color:var(--muted);font-size:.85rem}
+footer p + p{margin-top:8px}
+
+@media (max-width:860px){
+  .hero,.how,.plans,.calc{grid-template-columns:minmax(0,1fr)}
+  .hubshot{position:static;max-width:420px}
+  .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .stats div:nth-child(3){border-left:0;padding-left:0}
+  .stats div:nth-child(n+3){border-top:1px solid var(--line)}
+  .canvas,.facts{grid-template-columns:minmax(0,1fr)}
+  .team{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .next{grid-template-columns:minmax(0,1fr)}
+  .endings{grid-template-columns:minmax(0,1fr)}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<!-- ================= HERO ================= -->
+<header class="band night" style="padding-block:0">
+  <div class="wrap">
+    <div class="nav">
+      <a class="logo" href="#top" id="top">MaTak <span lang="ar" dir="rtl">ما طقّ</span></a>
+      <nav aria-label="Sections">
+        <a href="#how">How it works</a><a href="#demo">Demo</a><a href="#pricing">Pricing</a><a href="#compare">Compare</a><a href="#team">Team</a><a href="#contact">Contact</a>
+      </nav>
+    </div>
+    <div class="hero">
+      <div>
+        <p class="eyebrow">Smart power hub for hotels in Lebanon</p>
+        <h1>No hotel should go dark for a <em>water heater.</em></h1>
+        <p class="lede">MaTak is a smart hub with an AI that learns your hotel’s priorities and decides what stays on when power runs short. Guests first. The water heater can wait.</p>
+        <p class="meaning"><b lang="ar" dir="rtl">ما طقّ</b> Lebanese for “it didn’t trip”</p>
+        <div class="cta">
+          <a class="btn solid" href="#contact">Join the pilot</a>
+          <a class="btn line" href="#demo">Watch it work</a>
+        </div>
+      </div>
+
+      <div class="panel" id="panel" aria-live="polite">
+        <div class="panel-top"><span>Tonight · 6:00 PM</span><span>Generator subscription</span></div>
+        <div class="readout"><b id="pLoad">32 A</b><span>of 30 A</span></div>
+        <div class="bar"><i id="pBar"></i><u></u></div>
+        <ul class="loads" id="pLoads"></ul>
+        <div class="verdict" id="pVerdict"></div>
+        <div class="panel-btns">
+          <button class="main" id="pMatak" type="button">Let MaTak decide</button>
+          <button id="pReset" type="button">Everything back on</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ================= PROBLEM ================= -->
+<section class="band">
+  <div class="wrap">
+    <div class="head">
+      <p class="eyebrow">The problem</p>
+      <h2>Hotels don’t lack power.</h2>
+    </div>
+    <div class="stats">
+      <div><b>35–40%</b><p>of a Lebanese hotel’s operating costs go to energy</p><small>vs 8–10% worldwide</small></div>
+      <div><b>$0.54</b><p>per generator kWh in August</p><small>twice EDL’s 27¢</small></div>
+      <div><b>Closed</b><p>many 3- and 4-star hotels outside Beirut</p><small>as energy costs soared (2023)</small></div>
+      <div><b>34k</b><p>hotel rooms in Lebanon</p><small>UNWTO, 2022</small></div>
+    </div>
+    <p class="pull">They lack priorities. <span>Every amp must go where it matters, but today the breaker decides, and it turns off everything.</span></p>
+  </div>
+</section>
+
+<!-- ================= HOW ================= -->
+<section class="band sunk" id="how">
+  <div class="wrap">
+    <div class="head">
+      <p class="eyebrow">How it works</p>
+      <h2>Teach the hotel what matters.</h2>
+    </div>
+    <div class="how">
+      <figure class="hubshot">
+        <img src="assets/hub.png" alt="The MaTak Hub: a metal box with a live load screen reading 21.6 A of 30 A, status lights, eight relay channels and a clamp current sensor" width="1502" height="1441">
+        <figcaption>MaTak Hub · 8 channels · 220 V · clamp sensor, no wires cut</figcaption>
+      </figure>
+      <div>
+        <ol class="steps">
+          <li><div><h3>Connect</h3><p>Each big load runs through a hub channel.</p></div></li>
+          <li><div><h3>Rank</h3><p>Guest rooms and the elevator first. The heater and laundry can wait.</p></div></li>
+          <li><div><h3>Protect</h3><p>Near the limit, MaTak pauses the lowest priority, then resumes it when there is room.</p></div></li>
+          <li><div><h3>Learn</h3><p>It spots staff routines and suggests new rules. One tap to approve.</p></div></li>
+          <li><div><h3>Save</h3><p>It switches off what staff forget and runs heavy loads at cheaper hours.</p></div></li>
+        </ol>
+        <p class="promise"><b>Our promise:</b> protection is included in every plan. Guest comfort is never behind a paywall.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= DEMO ================= -->
+<section class="band night demo" id="demo">
+  <div class="wrap">
+    <div class="head">
+      <p class="eyebrow">Demo</p>
+      <h2>Same evening, two endings.</h2>
+      <p class="lede">At 6:00 PM state power cuts and the limit drops from 40 A to 30 A. Watch what happens with and without priorities.</p>
+    </div>
+    <video controls muted playsinline preload="metadata" poster="assets/poster.png" src="assets/demo.mp4"></video>
+    <div class="endings">
+      <div class="bad"><b>No priorities</b><p>The whole hotel trips.</p></div>
+      <div class="good"><b>With priorities</b><p>Only the heater waits.</p></div>
+    </div>
+    <div class="cta"><a class="btn solid" href="simulation.html" target="_blank" rel="noopener">Try the live simulation</a></div>
+  </div>
+</section>
+
+<!-- ================= PRICING ================= -->
+<section class="band" id="pricing">
+  <div class="wrap">
+    <div class="head">
+      <p class="eyebrow">Pricing</p>
+      <h2>Built for hotels. Ready for homes.</h2>
+      <p class="lede">Launch pricing. The first hubs are reserved for our pilot hotels.</p>
+    </div>
+    <div class="plans">
+      <div class="plan hotel">
+        <span class="tag">Hotels</span>
+        <div><h3>Hotel Hub</h3><div class="price"><b>$490</b><span>installed, per panel</span></div></div>
+        <ul class="rows">
+          <li><div>Pro<small>Priority engine, monthly report, support</small></div><span class="num">$39/mo per site</span></li>
+          <li><div>Multi-site<small>Hotel groups and guesthouse chains</small></div><span class="num">Custom</span></li>
+        </ul>
+        <p class="fine">Parts cost about $210 per panel: ESP32, clamp sensor, relay board, 3 contactors.</p>
+      </div>
+      <div class="plan">
+        <span class="tag">Also for homes</span>
+        <div><h3>Home Hub</h3><div class="price"><b>$129</b><span>once</span></div></div>
+        <ul class="rows">
+          <li><div>Smart</div><span class="num">$3.99/mo</span></li>
+          <li><div>Family</div><span class="num">$5.99/mo</span></li>
+        </ul>
+        <p class="fine">Same brain, as a subscription, for homes on generator subscriptions.</p>
+      </div>
+    </div>
+
+    <div class="calc" id="calc">
+      <div>
+        <h3 style="font-size:1.5rem">Pays back in year one</h3>
+        <p class="fine" style="margin:8px 0 22px">$1,600 a month of energy spend is enough: 5% saved covers the hub and 12 months of Pro. Try your own numbers.</p>
+        <label for="spend">Your energy spend per month</label>
+        <output id="spendOut" for="spend">$1,600</output>
+        <input type="range" id="spend" min="500" max="10000" step="100" value="1600">
+        <fieldset>
+          <legend>Energy saved</legend>
+          <div class="seg" id="rate">
+            <button type="button" data-r="5" aria-pressed="true">5%</button>
+            <button type="button" data-r="10" aria-pressed="false">10%</button>
+            <button type="button" data-r="15" aria-pressed="false">15%</button>
+          </div>
+        </fieldset>
+        <p class="fine" style="margin-top:14px">Feedback and control typically save 5–15% of energy (Darby, 2006). We plan on 5%.</p>
+      </div>
+      <div class="result">
+        <div><span>Saved per month</span><b id="rMonth"></b></div>
+        <div><span>Saved in year one</span><b id="rYear"></b></div>
+        <div><span>Hub + 12 months of Pro</span><b>$958</b></div>
+        <div><span>Net in year one</span><b id="rNet"></b></div>
+        <div class="big" id="rBig"><b id="rPay"></b><span id="rNote"></span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= COMPARE ================= -->
+<section class="band sunk" id="compare">
+  <div class="wrap">
+    <div class="head">
+      <p class="eyebrow">Compare</p>
+      <h2>Others switch. We rank.</h2>
+    </div>
+    <div class="scroll">
+      <table>
+        <thead><tr><th>Option</th><th>Knows your priorities</th><th>Stops trips automatically</th><th>Learns habits</th><th>Small-hotel price</th><th>Cost</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">Staff doing it by hand</th><td class="p">Partly</td><td class="n">No</td><td class="n">No</td><td class="y">Yes</td><td class="cost">Staff time + dark rooms</td></tr>
+          <tr><th scope="row">Bigger generator</th><td class="n">No</td><td class="p">Partly</td><td class="n">No</td><td class="n">No</td><td class="cost">Very high</td></tr>
+          <tr><th scope="row">Energy monitor (e.g. Shelly Pro 3EM)</th><td class="n">No</td><td class="n">No</td><td class="n">No</td><td class="y">Yes</td><td class="cost">~$155</td></tr>
+          <tr><th scope="row">Building management system</th><td class="y">Yes</td><td class="y">Yes</td><td class="n">No</td><td class="n">No</td><td class="cost">Built for big chains</td></tr>
+          <tr class="us"><th scope="row">MaTak</th><td class="y">Yes</td><td class="y">Yes</td><td class="y">Yes</td><td class="y">Yes</td><td class="cost">$490 + $39/mo</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="lede">Only MaTak ranks, protects and learns at a small-hotel price.</p>
+  </div>
+</section>
+
+<!-- ================= BUSINESS ================= -->
+<section class="band" id="business">
+  <div class="wrap">
+    <div class="head">
+      <p class="eyebrow">For partners and investors</p>
+      <h2>We sell guests who notice nothing.</h2>
+      <p class="lede">Like Hilti selling holes, not drills, MaTak is a service, not a box.</p>
+    </div>
+    <div class="canvas">
+      <div><h3>Customer segments</h3><ul><li>Small and mid-size hotels, guesthouses (primary)</li><li>Homes on generator subscriptions (add-on)</li></ul></div>
+      <div><h3>Value proposition</h3><ul><li>Guests never go dark for a water heater</li><li>Priorities enforced automatically</li><li>Lower energy bill</li><li>Manager stays in control</li></ul></div>
+      <div><h3>Channels</h3><ul><li>Direct sales to hotels</li><li>Installer partners</li><li>Online (home plans)</li></ul></div>
+      <div><h3>Relationships</h3><ul><li>Dedicated hotel support</li><li>Monthly savings report</li><li>Self-service app (homes)</li></ul></div>
+      <div><h3>Key activities</h3><ul><li>Hub assembly and QA</li><li>Priority engine and app</li></ul></div>
+      <div><h3>Key resources</h3><ul><li>Priority and learning engine</li><li>Usage data from every hub</li></ul></div>
+      <div><h3>Key partners</h3><ul><li>Certified electricians and installers</li><li>Electronics suppliers</li><li>Hotel association and tourism events</li></ul></div>
+      <div><h3>Cost structure</h3><ul><li>Hub components, assembly, installation</li><li>Cloud, app, salaries, partner commissions</li></ul></div>
+      <div><h3>Revenue streams</h3><ul><li>Hub sales: $490 hotel panel, $129 home</li><li>Subscriptions: Pro $39 per site, home from $3.99</li></ul></div>
+    </div>
+    <div class="facts">
+      <div><b>≈ 2%</b><p>of a hotel’s total costs, from saving 5% of energy</p></div>
+      <div><b>≈ $620k/yr</b><p>from 1% of Lebanon’s 1.3M homes on the home plan</p></div>
+      <div><b>≈ $210</b><p>parts per hotel panel, sold installed at $490</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= TEAM ================= -->
+<section class="band night" id="team">
+  <div class="wrap">
+    <div class="head">
+      <p class="eyebrow">Team Pivot · USJ · Innovation &amp; Design Thinking</p>
+      <h2>No hotel should go dark for a water heater.</h2>
+    </div>
+    <ul class="team">
+      <li><i>JA</i>Jane Al Bitar</li>
+      <li><i>EK</i>Emile Khoury</li>
+      <li><i>EE</i>Elie El Ghaoui</li>
+      <li><i>WT</i>Wadih Tawk</li>
+      <li><i>AE</i>Alex El Achkar</li>
+    </ul>
+    <div class="next" id="contact">
+      <div>
+        <p class="eyebrow">Our next step</p>
+        <h3 style="font-size:clamp(1.5rem,3vw,2rem)">Join the pilot: 20 hubs in 5 hotels.</h3>
+        <p>We are installing real hardware in five hotels to prove the savings with real data. Write to us and we will come and look at your panel.</p>
+      </div>
+      <div class="mailbox">
+        <span class="mail" id="mail">hello@matak.lb</span>
+        <button class="btn solid" id="copyMail" type="button">Copy email</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <p>Sources: Lebanese Hotel Association via LBCI (2023) · Energy Ministry via L’Orient Today (2026) · UNWTO (2022) · Darby (2006) · retailer part prices.</p>
+    <p>© 2026 MaTak · Team Pivot, Université Saint-Joseph de Beyrouth. Savings figures are estimates and depend on each hotel’s usage.</p>
+  </div>
+</footer>
+
+<script>
+(function(){
+  const $ = s => document.querySelector(s);
+  const el = (t, c, txt) => { const n = document.createElement(t); if (c) n.className = c; if (txt != null) n.textContent = txt; return n; };
+  const money = n => (n < 0 ? '−$' : '$') + Math.abs(Math.round(n)).toLocaleString('en-US');
+
+  /* ---- hero breaker panel ---- */
+  const LIMIT = 30, SCALE = 40;
+  const LOADS = [
+    {id:'ac', name:'Guests’ AC', amps:14, note:'40 rooms'},
+    {id:'lift', name:'Elevator', amps:4, note:'guests between floors'},
+    {id:'lobby', name:'Lobby & lights', amps:4, note:'reception, hallways'},
+    {id:'heater', name:'Water heater', amps:10, note:'the tank stays hot for hours'},
+  ];
+  const on = Object.fromEntries(LOADS.map(d => [d.id, true]));
+  let byMatak = false;
+  const sw = {};
+  LOADS.forEach(d => {
+    const li = el('li'), nm = el('span', 'nm', d.name);
+    nm.append(el('small', '', d.amps + ' A · ' + d.note));
+    const b = el('button', 'sw'); b.type = 'button'; b.setAttribute('role', 'switch'); b.setAttribute('aria-label', d.name);
+    b.onclick = () => { on[d.id] = !on[d.id]; byMatak = false; draw(); };
+    sw[d.id] = b; li.append(nm, b); $('#pLoads').append(li);
+  });
+  function draw(){
+    const load = LOADS.reduce((a, d) => a + (on[d.id] ? d.amps : 0), 0), trip = load > LIMIT;
+    $('#panel').classList.toggle('tripped', trip);
+    $('#pLoad').textContent = (trip ? load : load) + ' A';
+    $('#pBar').style.width = Math.min(100, load / SCALE * 100) + '%';
+    LOADS.forEach(d => sw[d.id].setAttribute('aria-checked', on[d.id]));
+    const off = LOADS.filter(d => !on[d.id]);
+    $('#pVerdict').textContent = trip
+      ? load + ' A on a 30 A limit. The breaker trips and turns off everything: the rooms, the lobby, the elevator. Switch one off, or let MaTak decide.'
+      : byMatak ? 'MaTak paused only the water heater. 22 A, lights on, guests notice nothing. It didn’t trip.'
+      : off.length === 0 ? 'Within the limit.'
+      : load + ' A, within the limit. You switched off: ' + off.map(d => d.name.toLowerCase()).join(', ') + (off.length === 1 && off[0].id === 'heater' ? '. That is the choice MaTak makes, every second.' : '. MaTak would pause only the water heater.');
+  }
+  $('#pMatak').onclick = () => { LOADS.forEach(d => on[d.id] = d.id !== 'heater'); byMatak = true; draw(); };
+  $('#pReset').onclick = () => { LOADS.forEach(d => on[d.id] = true); byMatak = false; draw(); };
+  draw();
+
+  /* ---- payback calculator: hub $490 once + Pro $39/month ---- */
+  const HUB = 490, PRO = 39;
+  let rate = 5;
+  function calc(){
+    const spend = +$('#spend').value, saved = spend * rate / 100, year = saved * 12, cost = HUB + PRO * 12, net = year - cost;
+    $('#spendOut').textContent = money(spend);
+    $('#rMonth').textContent = money(saved);
+    $('#rYear').textContent = money(year);
+    $('#rNet').textContent = (net > 0 ? '+' : '') + money(net);
+    const margin = saved - PRO, big = $('#rBig');
+    if (margin <= 0){
+      big.classList.add('no');
+      $('#rPay').textContent = 'Savings don’t cover Pro at this spend';
+      $('#rNote').textContent = 'You still get trip protection. The hub pays for itself from about $1,600 a month at 5%.';
+    } else {
+      const m = Math.ceil(HUB / margin);
+      big.classList.toggle('no', m > 24);
+      $('#rPay').textContent = 'Pays back in month ' + m;
+      $('#rNote').textContent = 'After that, about ' + money(margin) + ' a month stays in your pocket.';
+    }
+  }
+  $('#spend').oninput = calc;
+  $('#rate').onclick = e => {
+    const b = e.target.closest('button'); if (!b) return;
+    rate = +b.dataset.r;
+    document.querySelectorAll('#rate button').forEach(x => x.setAttribute('aria-pressed', x === b));
+    calc();
+  };
+  calc();
+
+  /* ---- copy the contact email ---- */
+  $('#copyMail').onclick = () => {
+    const b = $('#copyMail'), done = () => { b.textContent = 'Copied'; setTimeout(() => b.textContent = 'Copy email', 1800); };
+    const select = () => { const r = document.createRange(); r.selectNodeContents($('#mail')); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r); b.textContent = 'Selected, press copy'; };
+    try { navigator.clipboard.writeText($('#mail').textContent).then(done, select); } catch (e) { select(); }
+  };
+})();
+</script>
